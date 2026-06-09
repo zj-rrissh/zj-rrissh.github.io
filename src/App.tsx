@@ -203,7 +203,7 @@ function HomePage({
         </div>
 
         <p className="hero-copy">
-          记录 React、TypeScript、工程化和一些正在形成的想法，把零散实践整理成可回看的技术笔记。
+          记录和分享一些技术文章、开源项目以及零碎的想法。喜欢折腾各种工具和技术，偶尔写写东西，欢迎交流。
         </p>
 
         <div className="link-row" aria-label="个人链接">
