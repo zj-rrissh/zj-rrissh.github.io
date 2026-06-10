@@ -155,6 +155,33 @@ function App() {
   );
 }
 
+function HomeProfile() {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <>
+      <div className="profile-line">
+        <button
+          className="avatar-toggle"
+          type="button"
+          aria-expanded={expanded}
+          aria-label={expanded ? '收起个人信息' : '展开个人信息'}
+          onClick={() => setExpanded((s) => !s)}
+        >
+          <img className="avatar" src="/avatar.png" alt="Rrissh avatar" />
+        </button>
+        {expanded && <h2>rrissh</h2>}
+      </div>
+
+      {expanded && (
+        <p className="hero-copy">
+          记录和分享一些技术文章、开源项目以及零碎的想法。喜欢折腾各种工具和技术，偶尔写写东西，欢迎交流。
+        </p>
+      )}
+    </>
+  );
+}
+
 function HomePage({
   latestPosts,
   onNavigate,
@@ -197,14 +224,7 @@ function HomePage({
   return (
     <>
       <section className="hero" aria-label="个人信息">
-        <div className="profile-line">
-          <img className="avatar" src="/avatar.png" alt="Rrissh avatar" />
-          <h2>rrissh</h2>
-        </div>
-
-        <p className="hero-copy">
-          记录和分享一些技术文章、开源项目以及零碎的想法。喜欢折腾各种工具和技术，偶尔写写东西，欢迎交流。
-        </p>
+        <HomeProfile />
 
         <div className="link-row" aria-label="个人链接">
           {socialLinks.map((link) => (
