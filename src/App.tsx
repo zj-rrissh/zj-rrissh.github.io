@@ -302,7 +302,7 @@ function ArchivePage({
       <p className="eyebrow">Archive</p>
       {/* <h1 id="archive-title">归档</h1> */}
       {/* <p className="page-lead">所有文章按时间倒序排列，方便回看不同阶段写下的技术记录和随笔。</p> */}
-      <PostList posts={posts} onNavigate={onNavigate} dense />
+      <PostList posts={posts} onNavigate={onNavigate} timeline />
     </section>
   );
 }
@@ -395,21 +395,53 @@ function PostList({
   onNavigate,
   dense = false,
   compact = false,
+  timeline = false,
 }: {
   posts: Post[];
   onNavigate: (path: RoutePath) => void;
   dense?: boolean;
   compact?: boolean;
+  timeline?: boolean;
 }) {
   const className = [
     'post-list',
     dense ? 'is-dense' : '',
     compact ? 'is-compact' : '',
+    timeline ? 'is-timeline' : '',
   ].filter(Boolean).join(' ');
 
   function handlePostClick(event: MouseEvent<HTMLAnchorElement>, slug: string) {
     event.preventDefault();
     onNavigate(`/posts/${slug}`);
+  }
+
+  if (timeline) {
+    return (
+      <div className={className}>
+        {posts.map((post) => (
+          <article className="timeline-item" key={post.title}>
+            <div className="timeline-date">
+              <time dateTime={post.date}>{formatDate(post.date)}</time>
+            </div>
+            <div className="timeline-line" aria-hidden="true">
+              <span className="timeline-dot" />
+            </div>
+            <div className="timeline-content">
+              <p className="post-topic">{post.tags.join(' / ')}</p>
+              <h2>
+                <a href={`/posts/${post.slug}`} onClick={(event) => handlePostClick(event, post.slug)}>
+                  {post.title}
+                </a>
+              </h2>
+              <p>{post.excerpt}</p>
+              <div className="post-meta">
+                <span>{post.readingTime}</span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    );
   }
 
   return (
