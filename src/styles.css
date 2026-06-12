@@ -936,6 +936,14 @@ h1 {
   text-underline-offset: 0.22em;
 }
 
+.article-body .article-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
 @media (max-width: 760px) {
   .page-shell {
     width: min(100% - 28px, 640px);

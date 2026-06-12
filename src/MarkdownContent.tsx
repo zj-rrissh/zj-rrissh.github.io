@@ -10,6 +10,7 @@ type Block =
 type InlineToken =
   | { type: 'code'; text: string; index: number; length: number }
   | { type: 'link'; text: string; href: string; index: number; length: number }
+  | { type: 'image'; text: string; href: string; index: number; length: number }
   | { type: 'strong'; text: string; index: number; length: number }
   | { type: 'em'; text: string; index: number; length: number };
 
@@ -170,6 +171,13 @@ function findNextToken(text: string, start: number): InlineToken | null {
       index,
       length: match[0].length,
     })),
+    findToken(source, start, /!\[([^\]]*)\]\(([^)]+)\)/, (match, index) => ({
+      type: 'image',
+      text: match[1],
+      href: match[2],
+      index,
+      length: match[0].length,
+    })),
     findToken(source, start, /\[([^\]]+)\]\(([^)]+)\)/, (match, index) => ({
       type: 'link',
       text: match[1],
@@ -209,6 +217,18 @@ function findToken(
 function renderToken(token: InlineToken, key: number) {
   if (token.type === 'code') {
     return <code key={key}>{token.text}</code>;
+  }
+
+  if (token.type === 'image') {
+    return (
+      <img
+        key={key}
+        src={token.href}
+        alt={token.text}
+        loading="lazy"
+        className="article-image"
+      />
+    );
   }
 
   if (token.type === 'link') {
