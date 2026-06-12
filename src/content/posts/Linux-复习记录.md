@@ -3,7 +3,7 @@ title: Linux 基础知识记录
 date: 2026-06-11
 tags: Linux，计算机基础
 excerpt: 一次关于 Linux 文件系统、进程管理和进程间通信的复习手记
-readingTime: 10 min read
+readingTime: 15 min read
 ---
 
 # Linux 基础知识记录
@@ -72,18 +72,190 @@ ls > out.txt 2>&1      # 把 stdout 和 stderr 合并到一起
 ls &> out.txt          # 上面这行的简写
 ```
 
-### open() 系统调用
+### 系统调用 vs C 标准库 I/O
 
-C 里用 `open()` 打开文件时，最核心的参数就两个：文件路径和访问模式。举个栗子：
+Linux 的文件 I/O 实际上有两层 API 可以用。底层是系统调用，直接跟内核打交道；上层是 C 标准库提供的封装，带缓冲、用起来更顺手。理解这两层以及它们之间的关系，才算真正搞懂了文件 I/O。
+
+---
+
+#### 系统调用层：直接跟内核对话
+
+系统调用是内核暴露给用户程序的接口。每次调用都会经历一次"用户态→内核态→用户态"的切换，有一定开销。常用的文件相关系统调用有这几个：
+
+```c
+int fd = open(const char *path, int flags, mode_t mode);   // 打开或创建文件
+int close(int fd);                                           // 关闭文件
+ssize_t read(int fd, void *buf, size_t count);              // 读取
+ssize_t write(int fd, const void *buf, size_t count);       // 写入
+off_t lseek(int fd, off_t offset, int whence);              // 调整读写位置
+int stat(const char *path, struct stat *buf);               // 获取文件信息
+int unlink(const char *path);                                // 删除文件
+```
+
+先看 `open()`。它最核心的参数就两个：文件路径和访问模式。比如：
 
 ```c
 int fd = open("/path/to/file", O_RDONLY);
 int fd = open("/path/to/file", O_CREAT | O_WRONLY, 0644);
 ```
 
-第一行是只读打开一个已有文件。第二行多了 `O_CREAT`，意思是"文件不存在就创建"，然后给了 0644 权限。这里 0644 就是前面讲的 rw-r--r--。注意，如果没传 `O_CREAT`，mode 参数会被忽略。
+第一行只读打开一个已有文件。第二行多了 `O_CREAT`，意思是"文件不存在就创建"，然后给了 0644 权限。这里 0644 就是前面讲的 rw-r--r--。注意，如果没传 `O_CREAT`，mode 参数会被忽略。常用的 flags 还有 `O_TRUNC`（清空文件再写）、`O_APPEND`（追加写）。
 
-常用的 flags 还有 `O_TRUNC`（清空文件再写）、`O_APPEND`（追加写）。这几个组合起来基本能覆盖所有的 IO 场景。
+打开文件后，用 `read()` 和 `write()` 来读写：
+
+```c
+char buf[1024];
+ssize_t n = read(fd, buf, sizeof(buf));   // 读到 buf 里，返回实际读取的字节数
+if (n == -1) {
+    // 出错了
+} else if (n == 0) {
+    // 读到文件末尾
+}
+
+const char *msg = "hello";
+write(fd, msg, strlen(msg));              // 把数据写进文件
+```
+
+这里有个细节是返回值类型 `ssize_t`，它是有符号的，所以能返回 -1 表示出错。`size_t` 是无符号的，没法表示负数。
+
+`lseek()` 用来调整文件当前的读写位置：
+
+```c
+off_t pos = lseek(fd, 0, SEEK_END);          // 跳到末尾，常用来看文件大小
+lseek(fd, 0, SEEK_SET);                       // 跳到开头
+lseek(fd, 100, SEEK_CUR);                     // 从当前位置往后跳 100 字节
+```
+
+`stat()` 可以拿到文件的各种元信息——大小、权限、类型、修改时间等等：
+
+```c
+struct stat st;
+stat("/path/to/file", &st);
+printf("文件大小: %ld\n", st.st_size);
+printf("权限模式: %o\n", st.st_mode & 0777);
+```
+
+系统调用的特点是很"裸"——读写都直接跟内核交互，不给数据做缓冲。每次 `read()` 和 `write()` 都要切到内核态，频繁调用小数据量读写时性能并不好。
+
+---
+
+#### C 标准库 I/O：带缓冲的封装
+
+为了解决上面的问题，C 标准库在系统调用外面包了一层——也就是 `FILE *` 系列函数。它们自带用户空间缓冲区，攒够了一批数据才真正调用 `read()`/`write()` 去碰内核，减少了上下文切换。
+
+```c
+FILE *fp = fopen(const char *path, const char *mode);  // 打开流
+int fclose(FILE *fp);                                    // 关闭流
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *fp);    // 二进制读
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fp); // 二进制写
+char *fgets(char *s, int size, FILE *fp);               // 读一行（遇到 \n 停下）
+int fputs(const char *s, FILE *fp);                     // 写字符串
+int fprintf(FILE *fp, const char *fmt, ...);            // 格式化写入（printf 的文件版）
+int fscanf(FILE *fp, const char *fmt, ...);             // 格式化读取（scanf 的文件版）
+int fseek(FILE *fp, long offset, int whence);           // 调整位置
+long ftell(FILE *fp);                                   // 当前位置
+void rewind(FILE *fp);                                  // 回到开头
+int fflush(FILE *fp);                                   // 刷新缓冲区
+```
+
+打开文件的方式在 mode 参数里指定：
+
+```c
+FILE *fp = fopen("test.txt", "r");      // 只读（对应 O_RDONLY）
+FILE *fp = fopen("test.txt", "w");      // 只写，清空已有内容（O_WRONLY | O_CREAT | O_TRUNC）
+FILE *fp = fopen("test.txt", "a");      // 追加写（O_WRONLY | O_CREAT | O_APPEND）
+FILE *fp = fopen("test.txt", "r+");     // 读写（O_RDWR）
+FILE *fp = fopen("test.txt", "w+");     // 读写，清空已有内容
+```
+
+逐行读取文本文件是 `fgets()` 最常见的用法：
+
+```c
+FILE *fp = fopen("log.txt", "r");
+if (!fp) {
+    perror("fopen");
+    return 1;
+}
+
+char line[256];
+while (fgets(line, sizeof(line), fp)) {
+    // 处理每一行，line 里已经包含了末尾的 \n
+    printf("读到: %s", line);
+}
+
+fclose(fp);
+```
+
+`fgets()` 会在遇到换行符或缓冲区填满时停下来，自动在末尾加 `\0`。手动处理逐行读的时候它比 `scanf()` 安全得多。
+
+格式化输出到文件也很实用：
+
+```c
+FILE *fp = fopen("report.txt", "w");
+fprintf(fp, "姓名: %s, 分数: %d\n", name, score);  // 和 printf 一样的格式，只是写文件
+```
+
+`fread()` 和 `fwrite()` 适合读写二进制数据：
+
+```c
+int data[100];
+size_t n = fread(data, sizeof(int), 100, fp);   // 读 100 个 int
+fwrite(data, sizeof(int), n, fp);                // 把读出来的写回去
+```
+
+缓冲区相关的操作偶尔也要用到：
+
+```c
+fflush(fp);        // 把缓冲区里的数据强制刷到内核（即使还没攒满）
+setvbuf(fp, NULL, _IONBF, 0);   // 设置为无缓冲模式
+setvbuf(fp, NULL, _IOLBF, BUFSIZ); // 设置为行缓冲模式
+```
+
+---
+
+#### 两层的关系与选择
+
+每个 `FILE *` 内部其实都封装了一个文件描述符。你可以通过 `fileno()` 把它掏出来：
+
+```c
+FILE *fp = fopen("test.txt", "r");
+int fd = fileno(fp);     // 拿到藏在 FILE * 里面的文件描述符
+```
+
+反过来，`fdopen()` 可以把一个文件描述符包装成 `FILE *`：
+
+```c
+int fd = open("test.txt", O_RDONLY);
+FILE *fp = fdopen(fd, "r");   // 给系统调用返回的 fd 套上 stdio 的缓冲层
+```
+
+那什么时候用哪一层呢？
+
+**选系统调用的场景：**
+- 需要直接跟内核交互时（比如 `ioctl`、`mmap` 这类没有 stdio 封装的调用）
+- 高性能网络编程（epoll、非阻塞 I/O 必须用 fd 接口）
+- 需要精确控制读写位置和缓冲区时
+
+**选 C 标准库的场景：**
+- 日常读写文本文件
+- 需要格式化输入输出（`fprintf`、`fscanf`）
+- 逐行处理文本（`fgets`）
+- 追求代码简洁和可移植性
+
+简单说：**需要精细控制或者极致性能就上系统调用，日常读写文件用 stdio 就够了。**
+
+对了，还有一点值得注意：尽量不要混用同一文件上的 stdio 和系统调用操作。因为 stdio 在用户空间有缓冲区，底层文件描述符的读写位置可能已经不同步了。如果非要混用，记得在切换前 `fflush()`。
+
+```c
+// 反面教材 —— 混用可能导致数据错乱
+FILE *fp = fopen("test.txt", "w");
+fprintf(fp, "hello");       // 数据还在 stdio 缓冲区里
+int fd = fileno(fp);
+write(fd, "world", 5);      // 直接写进内核
+// 文件里最终是 "hello" 还是 "worldhello"？不确定，取决于缓冲区何时被刷
+```
+
+这个例子很好地说明了：理解 buffered I/O 和 raw I/O 的差异，才能写出正确无误的程序。
 
 ---
 
