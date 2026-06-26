@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首页布局 - 结构预览</title>
+<style>
+  /* === 基础重置 === */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0F1117;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #0F1117;
+    padding: 30px 40px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* === 顶部栏 === */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #2a2d35;
+  }
+
+  .header-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e8e8e8;
+    flex-shrink: 0;
+  }
+
+  .header-custom {
+    flex: 1;
+    height: 50px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-size: 14px;
+  }
+
+  /* === 主体：三列 === */
+  .main {
+    display: flex;
+    gap: 0;
+    margin-top: 30px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* --- 左列：时间线 --- */
+  .timeline-col {
+    width: 50px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .timeline-line {
+    position: absolute;
+    left: 24px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: #2a2d35;
+  }
+
+  /* --- 中列 --- */
+  .middle-col {
+    flex: 1;
+    display: flex;
+    gap: 0;
+    min-width: 0;
+  }
+
+  /* 中列 A — 文章卡片流 (iframe) */
+  .article-frame {
+    flex: 1;
+    overflow-y: scroll;
+    padding: 16px 0;
+    background: transparent;
+    scrollbar-width: none;
+  }
+
+  .article-frame::-webkit-scrollbar { display: none; }
+
+  .article-card {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+  }
+
+  .article-card:last-child { margin-bottom: 0; padding-bottom: 0; }
+
+  .article-date {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 6px;
+  }
+
+  .article-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #e0e0e0;
+    margin-bottom: 6px;
+  }
+
+  .article-summary {
+    font-size: 14px;
+    color: #999;
+    line-height: 1.6;
+  }
+
+  /* 中列分割线（虚线） */
+  .middle-divider {
+    width: 0;
+    border-left: 2px dashed #2a2d35;
+    margin: 0 10px;
+    flex-shrink: 0;
+  }
+
+  /* 中列 B — 合集分类列表（紧靠虚线） */
+  .collection-col {
+    width: 140px;
+    flex-shrink: 0;
+    padding-left: 0;
+  }
+
+  .collection-box {
+    background: transparent;
+    padding: 0;
+  }
+
+  .collection-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ccc;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .collection-item {
+    font-size: 13px;
+    color: #999;
+    padding: 5px 0;
+    cursor: default;
+  }
+
+  .collection-item:hover { color: #ddd; }
+
+  .collection-count {
+    float: right;
+    color: #555;
+    font-size: 12px;
+  }
+
+  /* --- 右列：侧边栏 --- */
+  .sidebar-col {
+    width: 130px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-left: auto;
+    align-items: flex-end;
+  }
+
+  .sidebar-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #2a2d35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 12px;
+  }
+
+  .sidebar-section {
+    padding: 0;
+    background: transparent;
+  }
+
+  .sidebar-section-title {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-link {
+    display: block;
+    font-size: 13px;
+    color: #999;
+    padding: 4px 0;
+    cursor: default;
+  }
+
+  .sidebar-link:hover { color: #ddd; }
+
+  .friend-link {
+    display: block;
+    font-size: 13px;
+    color: #4a8bf5;
+    padding: 4px 0;
+    cursor: default;
+  }
+
+  /* === 底部 === */
+  .footer-line {
+    margin-top: 40px;
+    padding: 20px 0;
+    text-align: center;
+    color: #444;
+    font-size: 13px;
+  }
+
+  /* === 区域标签（仅结构预览用） === */
+  .zone-label {
+    font-size: 11px;
+    color: #444;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* === 响应式 === */
+  @media (max-width: 800px) {
+    .sidebar-col { display: none; }
+    .collection-col { width: 120px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== 顶部栏 ===== -->
+  <header class="header">
+    <div class="header-logo">RRISSH</div>
+    <div class="header-custom">自定义区域（占位 / 后续添加动效）</div>
+  </header>
+
+  <!-- ===== 主体三列 ===== -->
+  <div class="main">
+
+    <!-- 左列：时间线 -->
+    <div class="timeline-col">
+      <div class="timeline-line"></div>
+    </div>
+
+    <!-- 中列：文章流 + 合集 -->
+    <div class="middle-col">
+
+      <!-- 中列 A：文章卡片流（独立 iframe 滚动） -->
+      <div class="article-frame">
+        <div class="article-card">
+          <div class="article-date">2026 年 6 月 26 日</div>
+          <div class="article-title">第一篇博客文章标题</div>
+          <div class="article-summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+        </div>
+        <div class="article-card">
+          <div class="article-date">2026 年 6 月 20 日</div>
+          <div class="article-title">第二篇博客文章标题</div>
+          <div class="article-summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+        </div>
+        <div class="article-card">
+          <div class="article-date">2026 年 6 月 15 日</div>
+          <div class="article-title">第三篇博客文章标题</div>
+          <div class="article-summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+        </div>
+        <div class="article-card">
+          <div class="article-date">2026 年 6 月 10 日</div>
+          <div class="article-title">第四篇博客文章标题</div>
+          <div class="article-summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+        </div>
+        <div class="article-card">
+          <div class="article-date">2026 年 6 月 5 日</div>
+          <div class="article-title">第五篇博客文章标题</div>
+          <div class="article-summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+        </div>
+      </div>
+
+      <!-- 中列分割线（虚线） -->
+      <div class="middle-divider"></div>
+
+      <!-- 中列 B：合集分类列表（紧靠虚线，正常随页面滚动） -->
+      <div class="collection-col">
+        <div class="collection-box">
+          <div class="collection-title">分类合集</div>
+          <div class="collection-item">技术笔记 <span class="collection-count">12</span></div>
+          <div class="collection-item">生活随笔 <span class="collection-count">8</span></div>
+          <div class="collection-item">项目记录 <span class="collection-count">5</span></div>
+          <div class="collection-item">读书笔记 <span class="collection-count">3</span></div>
+          <div class="collection-item">旅行日志 <span class="collection-count">2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右列：侧边栏 -->
+    <div class="sidebar-col">
+      <div class="sidebar-avatar">头像</div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">导航</div>
+        <div class="sidebar-link">首页</div>
+        <div class="sidebar-link">关于</div>
+        <div class="sidebar-link">归档</div>
+        <div class="sidebar-link">标签</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">友链</div>
+        <div class="friend-link">→ 友人A</div>
+        <div class="friend-link">→ 友人B</div>
+        <div class="friend-link">→ 友人C</div>
+        <div class="friend-link">→ 友人D</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 底部 ===== -->
+  <div class="footer-line">---</div>
+
+</div>
+</body>
+</html>
