@@ -1,0 +1,207 @@
+# SSE (Server-Sent Events) 详解
+
+> 本文档记录了 SSE 的原理、在 OmniOwn 中的实现方式，以及与 HTTP、TCP 的关系。
+
+---
+
+## 1. 协议栈定位
+
+SSE **不是传输层协议**，它属于**应用层**，基于 HTTP 构建。
+
+```
+  SSE (事件流格式)      ← 应用层：定义数据的格式和推送时机
+  HTTP                 ← 应用层：定义请求/响应模型
+  TCP                  ← 传输层：建立连接、可靠传输、流量控制
+  IP                   ← 网络层：路由和寻址
+  以太网/WiFi          ← 链路层：物理传输
+```
+
+> TCP 是**水管**，HTTP 是水管里的**水流**，SSE 是水龙头的**持续滴水模式**——不定义水管怎么铺，只定义水滴的格式和时机。
+
+---
+
+## 2. SSE 与普通 HTTP 请求的区别
+
+### 普通 HTTP 请求
+
+```
+客户端 ──── HTTP GET ──────→ 服务端
+客户端 ←─── 响应体 (完整) ─── 服务端
+         (连接关闭)
+```
+
+- 请求 → 响应 → 连接关闭
+- 服务端无法主动推送
+
+### SSE
+
+```
+客户端 ──── HTTP GET ──────→ 服务端
+客户端 ←─── 响应头 (200 OK) ─ 服务端
+客户端 ←─── res.write(data) ─ 服务端 (保持连接)
+客户端 ←─── res.write(data) ─ 服务端 (保持连接)
+客户端 ←─── res.write(data) ─ 服务端 (保持连接)
+         (连接保持打开)
+```
+
+- 请求 → 持续接收
+- 服务端可以**随时**主动推送
+- 连接直到任意一方关闭才断开
+
+---
+
+## 3. Express 中的 `req` 和 `res`
+
+当 Express 收到 HTTP 请求时，创建两个对象传入回调：
+
+### `req` (Request) — "客户端说了什么"
+
+```typescript
+router.get('/', (req, res) => {
+  req.method     // "GET"
+  req.url       // "/api/events"
+  req.headers   // { host: "127.0.0.1:3001", accept: "text/event-stream", ... }
+  req.socket    // 底层的 TCP Socket
+})
+```
+
+### `res` (Response) — "如何回复客户端"
+
+```typescript
+router.get('/', (req, res) => {
+  res.setHeader(key, value)   // 设置 HTTP 响应头
+  res.write(data)             // 向客户端写入数据（不关闭连接）
+  res.end()                   // 关闭连接
+})
+```
+
+### 两者的关系
+
+```
+                 TCP 连接
+  ┌─────────┐  ┌────────────────────┐  ┌──────────┐
+  │ 客户端   │──│  socket (双工通道)  │──│ 服务端   │
+  │ EventSrc│  │                    │  │ Express │
+  └─────────┘  └────────────────────┘  └──────────┘
+       │                                    │
+   通过 `fetch` 发送                req = 收到的请求信息
+   自动接收响应数据                 res = 回写数据的方法
+```
+
+**关键理解：** `req` 和 `res` 共享底层同一个 `socket`。`req` 是输入视角，`res` 是输出视角。
+
+---
+
+## 4. `res.write()` 为什么能实时传送到前端？
+
+`res.write(data)` 的完整路径：
+
+```
+res.write("data: {...}\n\n")
+  ↓
+Node.js 内部缓冲区（可写流 Writable Stream）
+  ↓
+操作系统 TCP 发送缓冲区
+  ↓
+通过网络传输
+  ↓
+前端 TCP 接收缓冲区
+  ↓
+EventSource 解析缓冲区 → 触发 onmessage
+```
+
+**不需要额外的"发送"操作。** `res.write()` 就是把数据写入服务端与客户端之间的 TCP 连接。HTTP 的响应体是流式的，SSE 利用这个特性：设置 `Connection: keep-alive` 告诉客户端"连接不要关"，后续每次 `res.write()` 都会实时推送。
+
+---
+
+## 5. OmniOwn 中的 SSE 实现
+
+### 完整调用链路
+
+```
+前端                               服务端
+  │                                  │
+  │  new EventSource('/api/events')  │
+  │ ──────────────────────────────→  │
+  │                                  │ Express 创建 req, res
+  │                                  │ addSseClient(res)
+  │                                  │   → CLIENTS.add(res)
+  │  ← SSE: {"type":"connected"}     │
+  │                                  │
+  │  (文件被放入 library)             │
+  │                                  │ watch 检测到变更
+  │                                  │ emitFileChange(...)
+  │                                  │   → 遍历 CLIENTS
+  │  ← SSE: {"type":"file-change"}   │     逐个 res.write()
+  │                                  │
+  │  ← SSE: :heartbeat (每 15 秒)    │  心跳保持连接
+```
+
+### 代码结构
+
+| 文件 | 职责 |
+|------|------|
+| `server/src/services/events.service.ts` | 维护 `CLIENTS` 集合，提供 `emitFileChange()` / `addSseClient()` |
+| `server/src/api/events.ts` | `GET /api/events` SSE HTTP 端点 |
+| `server/src/watch-manager.ts` | 解析 watch stdout，检测文件变更时调用 `emitFileChange()` |
+| `ui/src/services/events.service.ts` | 前端 `EventSource` 封装，自动重连 |
+
+### 关键代码片段
+
+**服务端 — 注册 SSE 客户端：**
+```typescript
+export function addSseClient(res: Response): () => void {
+  CLIENTS.add(res)                     // 把回写通道存入集合
+  res.write(`data: ${...connected...}\n\n`)  // 发送连接成功消息
+  // ...
+  return () => { CLIENTS.delete(res) } // 返回 cleanup 函数
+}
+```
+
+**服务端 — 推送事件：**
+```typescript
+export function emitFileChange(message: string): void {
+  const payload = `data: ${JSON.stringify(event)}\n\n`
+  for (const res of CLIENTS) {         // 遍历所有已连接客户端
+    res.write(payload)                 // 向每个前端推送
+  }
+}
+```
+
+**前端 — 建立连接：**
+```typescript
+const eventSource = new EventSource('/api/events')
+eventSource.onmessage = (e) => {
+  const data = JSON.parse(e.data)      // 收到服务端推送的数据
+}
+```
+
+---
+
+## 6. SSE vs WebSocket
+
+| 维度 | SSE | WebSocket |
+|------|-----|-----------|
+| 方向 | **服务端→客户端** 单向 | 双向 |
+| 协议 | 基于 HTTP | 独立协议 (ws://) |
+| 浏览器 API | `EventSource` | `WebSocket` |
+| 自动重连 | ✅ 内置 | ❌ 需手动实现 |
+| 传输格式 | 纯文本（事件流） | 二进制/文本 |
+| 复杂度 | 低 | 中 |
+| 适用场景 | 服务端推送通知/状态更新 | 实时聊天/游戏/协作编辑 |
+
+---
+
+## 7. 常见误区
+
+### ❌ "`res` 是给前端的东西"
+✅ `res` 是服务端的**回写通道句柄**。`CLIENTS` 集合里存的是服务端视角的 `res` 对象，不是传给前端的。
+
+### ❌ "SSE 是 TCP"
+✅ SSE 是**应用层**协议，依赖 HTTP 和 TCP，但它本身不是 TCP。
+
+### ❌ "HTTP 响应是一次性发完的"
+✅ 常规请求是"请求→响应→关闭"。但 SSE 利用 HTTP 的**流式响应**机制，设置 `Connection: keep-alive` 保持连接打开，后续 `res.write()` 可以持续推送。
+
+### ❌ "`res.write()` 需要手动触发发送"
+✅ `res.write()` 直接将数据写入底层 TCP 连接的写缓冲区，操作系统会自动发送。不需要额外的 `send()` 或 `flush()` 调用。
