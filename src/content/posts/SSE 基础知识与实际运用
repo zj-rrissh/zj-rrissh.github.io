@@ -1,3 +1,12 @@
+---
+title: SSE 基础知识与实际运用
+date: 2026.6.15
+tags: SSE
+excerpt: SSE基础
+readingTime: 5 minutes
+---
+
+
 # SSE (Server-Sent Events) 详解
 
 > 本文档记录了 SSE 的原理、在 OmniOwn 中的实现方式，以及与 HTTP、TCP 的关系。
