@@ -482,24 +482,6 @@ h1 {
   background: var(--wash);
 }
 
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.sidebar-nav-link {
-  font-size: 13px;
-  color: var(--muted);
-  padding: 2px 0;
-  transition: color 160ms ease;
-}
-
-.sidebar-nav-link:hover {
-  color: var(--ink);
-}
-
 .sidebar-friends {
   display: flex;
   flex-direction: column;
@@ -667,130 +649,209 @@ h1 {
   opacity: 0.84;
 }
 
+/* ═══════════ Article Page — Classic Tech Blog ═══════════ */
+
 .article-page {
   max-width: 760px;
   margin-right: auto;
   margin-left: auto;
 }
 
-.article-page h1 {
-  max-width: 760px;
-  font-size: clamp(2.5rem, 7vw, 5.1rem);
-  line-height: 0.96;
-}
+/* ── 文章标题 ── */
 
-.article-back {
-  margin-bottom: 44px;
+.article-page h2 {
+  margin: 0 0 6px;
+  font-size: clamp(1.6rem, 3.6vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--ink);
 }
 
 .article-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-top: 28px;
+  gap: 6px 14px;
+  margin-bottom: 32px;
   color: var(--soft);
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.82rem;
 }
+
+/* ── 正文容器 ── */
 
 .article-body {
-  margin-top: 70px;
+  font-size: 15px;
+  line-height: 1.65;
   color: var(--ink);
-  font-size: clamp(1rem, 1.6vw, 1.08rem);
-  line-height: 1.92;
 }
 
-.article-body > * {
-  margin: 0;
+/* ── 段落 ── */
+
+.article-body p {
+  margin: 0 0 14px;
 }
 
-.article-body > * + * {
-  margin-top: 26px;
+/* ── 分割线 ── */
+
+.article-body hr {
+  margin: 28px 0;
+  border: none;
+  border-top: 2px solid var(--wash);
 }
 
-.article-body h2,
-.article-body h3,
-.article-body h4 {
-  color: var(--ink);
-  font-weight: 760;
-  letter-spacing: 0;
-  line-height: 1.18;
-}
+/* ── 标题级联（粗体 + H3 蓝色左边框） ── */
 
 .article-body h2 {
-  margin-top: 58px;
-  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  margin: 32px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--wash);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .article-body h3 {
-  margin-top: 44px;
-  font-size: clamp(1.28rem, 2.4vw, 1.65rem);
+  margin: 26px 0 10px;
+  padding: 0 0 0 10px;
+  border-left: 4px solid #3b82f6;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .article-body h4 {
-  margin-top: 36px;
-  font-size: 1.08rem;
+  margin: 20px 0 8px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
 }
 
-.article-body p,
-.article-body li,
-.article-body blockquote {
-  color: var(--muted);
+/* ── 加粗强调 ── */
+
+.article-body strong {
+  color: var(--ink);
 }
+
+/* ── 链接 ── */
+
+.article-body a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.article-body a:visited {
+  color: #7c3aed;
+}
+
+.article-body a:hover {
+  color: #1d4ed8;
+}
+
+/* ── 列表 ── */
 
 .article-body ul,
 .article-body ol {
-  padding-left: 1.2em;
+  margin: 0 0 14px;
+  padding-left: 2em;
 }
 
-.article-body li + li {
-  margin-top: 8px;
+.article-body li {
+  margin: 0 0 3px;
 }
+
+/* ── 引用块（灰色粗左边框 + 加深背景） ── */
 
 .article-body blockquote {
-  padding-left: 22px;
-  background: linear-gradient(90deg, var(--accent) 0 2px, transparent 2px);
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  border-left: 4px solid #d1d5db;
+  background: var(--wash);
+  color: var(--muted);
   font-style: italic;
 }
 
-.article-body pre {
-  overflow-x: auto;
-  padding: 22px;
-  border-radius: 8px;
-  background: var(--wash);
-  color: var(--ink);
-  font-size: 0.92rem;
-  line-height: 1.7;
+.article-body blockquote p:last-child {
+  margin-bottom: 0;
 }
 
-.article-body code {
-  border-radius: 5px;
-  padding: 0.12em 0.35em;
-  background: var(--wash);
-  color: var(--accent-deep);
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 0.9em;
+/* ── 代码块（浅灰底色 + 1px 边框 + 横向滚动） ── */
+
+.article-body pre {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  background: #f6f8fa;
+  overflow-x: auto;
+  color: #24292e;
+  font-size: 13px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  line-height: 1.55;
 }
 
 .article-body pre code {
   padding: 0;
   background: transparent;
   color: inherit;
+  font-size: inherit;
 }
 
-.article-body a {
-  color: var(--accent-deep);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
+/* ── 行内代码 ── */
+
+.article-body code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #f0f2f4;
+  color: #be123c;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 13px;
 }
+
+/* ── 暗色模式适配 ── */
+
+:root[data-theme="dark"] .article-body pre {
+  background: #161b22;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+
+:root[data-theme="dark"] .article-body code {
+  background: #1c2128;
+  color: #f4717a;
+}
+
+:root[data-theme="dark"] .article-body blockquote {
+  background: #161b22;
+  border-left-color: #484f58;
+}
+
+:root[data-theme="dark"] .article-body a {
+  color: #58a6ff;
+}
+
+:root[data-theme="dark"] .article-body a:visited {
+  color: #bc8cff;
+}
+
+:root[data-theme="dark"] .article-body a:hover {
+  color: #79c0ff;
+}
+
+:root[data-theme="dark"] .article-body h2 {
+  border-bottom-color: #21262d;
+}
+
+/* ── 图片 ── */
 
 .article-body .article-image {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 auto;
-  border-radius: 8px;
+  margin: 14px auto;
+  border: 1px solid var(--wash);
+}
+
+:root[data-theme="dark"] .article-body .article-image {
+  border-color: #21262d;
 }
 
 @media (max-width: 760px) {

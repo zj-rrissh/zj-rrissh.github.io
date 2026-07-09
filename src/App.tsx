@@ -119,20 +119,18 @@ function App() {
         </a>
 
         <div className="header-actions">
-          {route !== '/' && (
-            <nav className="nav-links" aria-label="主导航">
-              {navItems.map((item) => (
-                <a
-                  key={item.path}
-                  className={item.path === route ? 'nav-link is-active' : 'nav-link'}
-                  href={item.path}
-                  onClick={(event) => handleRouteClick(event, item.path)}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          )}
+          <nav className="nav-links" aria-label="主导航">
+            {navItems.map((item) => (
+              <a
+                key={item.path}
+                className={item.path === route ? 'nav-link is-active' : 'nav-link'}
+                href={item.path}
+                onClick={(event) => handleRouteClick(event, item.path)}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
           <button
             className="theme-toggle"
             type="button"
@@ -210,11 +208,6 @@ function HomePage({
     onNavigate(`/posts/${slug}`);
   }
 
-  function handleNavClick(event: MouseEvent<HTMLAnchorElement>, path: NavPath) {
-    event.preventDefault();
-    onNavigate(path);
-  }
-
   return (
     <div className="home-layout">
       {/* 左列：时间线 */}
@@ -260,21 +253,8 @@ function HomePage({
       <aside className="home-sidebar">
         <img className="sidebar-avatar" src="/avatar.png" alt="Rrissh avatar" />
 
-        <nav className="sidebar-nav" aria-label="导航">
-          {navItems.map((item) => (
-            <a
-              key={item.path}
-              className="sidebar-nav-link"
-              href={item.path}
-              onClick={(event) => handleNavClick(event, item.path)}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
         <div className="sidebar-friends">
-          <p className="sidebar-friends-label">友链</p>
+          {/* <p className="sidebar-friends-label">友链</p> */}
           {socialLinks.map((link) => (
             <a
               key={link.href}
@@ -349,11 +329,11 @@ function PostPage({
 
   return (
     <article className="page-section article-page">
-      <button className="text-action article-back" type="button" onClick={() => onNavigate('/archive')}>
+      {/* <button className="text-action article-back" type="button" onClick={() => onNavigate('/archive')}>
         返回归档
-      </button>
+      </button> */}
       <p className="eyebrow">{post.tags.join(' / ')}</p>
-      <h1>{post.title}</h1>
+      <h2>{post.title}</h2>
       <div className="article-meta">
         <time dateTime={post.date}>{formatDate(post.date)}</time>
         <span>{post.readingTime}</span>

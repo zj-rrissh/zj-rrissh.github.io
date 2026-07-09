@@ -5,7 +5,8 @@ type Block =
   | { type: 'paragraph'; text: string }
   | { type: 'quote'; text: string }
   | { type: 'list'; ordered: boolean; items: string[] }
-  | { type: 'code'; code: string; language: string };
+  | { type: 'code'; code: string; language: string }
+  | { type: 'hr' };
 
 type InlineToken =
   | { type: 'code'; text: string; index: number; length: number }
@@ -73,6 +74,13 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
+    // 分割线：--- / *** / ___
+    if (/^(-|\*|_){3,}\s*$/.test(line)) {
+      blocks.push({ type: 'hr' });
+      index += 1;
+      continue;
+    }
+
     if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
       const ordered = /^\d+\.\s+/.test(line);
       const items: string[] = [];
@@ -119,6 +127,10 @@ function renderBlock(block: Block, index: number) {
 
   if (block.type === 'quote') {
     return <blockquote key={index}>{renderInline(block.text)}</blockquote>;
+  }
+
+  if (block.type === 'hr') {
+    return <hr key={index} />;
   }
 
   if (block.type === 'code') {
