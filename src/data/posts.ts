@@ -42,7 +42,7 @@ function parsePost(path: string, source: string): Post {
   return {
     slug,
     title: required(frontmatter.title, 'title', path),
-    excerpt: required(frontmatter.excerpt, 'excerpt', path),
+    excerpt: frontmatter.excerpt || extractExcerpt(content),
     date: required(frontmatter.date, 'date', path),
     readingTime: required(frontmatter.readingTime, 'readingTime', path),
     tags: required(frontmatter.tags, 'tags', path)
@@ -83,4 +83,26 @@ function required(value: string | undefined, field: string, path: string) {
   }
 
   return value;
+}
+
+function extractExcerpt(content: string, maxLen = 150): string {
+  const body = content.replace(/^#\s+.*$/m, '').trim();
+  const firstPara = body.split(/\n\s*\n/).find((block) => {
+    const line = block.trim();
+    return line && !line.startsWith('#') && !line.startsWith('```') && !line.startsWith('![');
+  });
+
+  if (!firstPara) return '';
+
+  const plain = firstPara
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+
+  if (plain.length <= maxLen) return plain;
+  return plain.slice(0, maxLen).replace(/\s+\S*$/, '') + '…';
 }

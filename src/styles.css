@@ -94,7 +94,7 @@ p {
   justify-content: space-between;
   gap: 28px;
   min-height: 36px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .brand {
@@ -267,6 +267,14 @@ p {
   transform: translateX(18px);
 }
 
+/* ── 导航栏与页面内容之间的分割线 ── */
+
+.header-divider {
+  margin: 8px 0 12px;
+  border: none;
+  border-top: 1px solid var(--wash);
+}
+
 .page-section {
   max-width: 840px;
   margin-top: 12px;
@@ -369,7 +377,7 @@ h1 {
 /* 文章流 */
 .home-article-stream {
   flex: 1;
-  max-width: 500px;
+  max-width: 660px;
   overflow-y: scroll;
   padding: 8px 0;
   scrollbar-width: none;
@@ -380,8 +388,8 @@ h1 {
 }
 
 .home-article-card {
-  margin-bottom: 28px;
-  padding-bottom: 28px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
 }
 
 .home-article-card:last-child {
@@ -446,14 +454,24 @@ h1 {
 }
 
 .home-collection-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  padding: 5px 0;
   font-size: 13px;
   color: var(--muted);
-  padding: 5px 0;
-  cursor: default;
+  background: transparent;
+  cursor: pointer;
 }
 
 .home-collection-item:hover {
   color: var(--ink);
+}
+
+.home-collection-item.is-active {
+  color: var(--accent-deep);
+  font-weight: 700;
 }
 
 .home-collection-count {
@@ -652,9 +670,10 @@ h1 {
 /* ═══════════ Article Page — Classic Tech Blog ═══════════ */
 
 .article-page {
-  max-width: 760px;
+  max-width: 860px;
   margin-right: auto;
   margin-left: auto;
+  margin-top: 0;
 }
 
 /* ── 文章标题 ── */
@@ -687,13 +706,13 @@ h1 {
 /* ── 段落 ── */
 
 .article-body p {
-  margin: 0 0 14px;
+  margin: 0 0 6px;
 }
 
 /* ── 分割线 ── */
 
 .article-body hr {
-  margin: 28px 0;
+  margin: 15px 0;
   border: none;
   border-top: 2px solid var(--wash);
 }
@@ -750,7 +769,7 @@ h1 {
 
 .article-body ul,
 .article-body ol {
-  margin: 0 0 14px;
+  margin: 0 0 4px;
   padding-left: 2em;
 }
 
@@ -761,7 +780,7 @@ h1 {
 /* ── 引用块（灰色粗左边框 + 加深背景） ── */
 
 .article-body blockquote {
-  margin: 0 0 14px;
+  margin: 0 0 4px;
   padding: 8px 12px;
   border-left: 4px solid #d1d5db;
   background: var(--wash);
@@ -776,7 +795,7 @@ h1 {
 /* ── 代码块（浅灰底色 + 1px 边框 + 横向滚动） ── */
 
 .article-body pre {
-  margin: 0 0 14px;
+  margin: 0 0 4px;
   padding: 12px 14px;
   border: 1px solid #d0d7de;
   border-radius: 4px;
@@ -846,7 +865,7 @@ h1 {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 14px auto;
+  margin: 8px auto;
   border: 1px solid var(--wash);
 }
 

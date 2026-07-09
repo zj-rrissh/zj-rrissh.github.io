@@ -145,6 +145,8 @@ function App() {
         </div>
       </header>
 
+      {route.startsWith('/posts/') && <hr className="header-divider" />}
+
       {route === '/' && <HomePage latestPosts={latestPosts} onNavigate={navigate} />}
       {route === '/archive' && <ArchivePage posts={sortedPosts} onNavigate={navigate} />}
       {route === '/showcase' && <ShowcasePage />}
@@ -161,6 +163,12 @@ function HomePage({
   latestPosts: Post[];
   onNavigate: (path: RoutePath) => void;
 }) {
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const filteredPosts = selectedTag
+    ? latestPosts.filter((post) => post.tags.includes(selectedTag))
+    : latestPosts;
+
   const collections = useMemo(() => {
     const map = new Map<string, number>();
     latestPosts.forEach((post) => {
@@ -218,7 +226,7 @@ function HomePage({
       {/* 中列：文章流 + 合集 */}
       <div className="home-middle">
         <div className="home-article-stream">
-          {latestPosts.map((post) => (
+          {filteredPosts.map((post) => (
             <article className="home-article-card" key={post.slug}>
               <time className="home-article-date" dateTime={post.date}>
                 {formatDate(post.date)}
@@ -240,11 +248,22 @@ function HomePage({
 
         <div className="home-collection">
           <h3 className="home-collection-title">分类合集</h3>
+          <button
+            className={'home-collection-item' + (selectedTag === null ? ' is-active' : '')}
+            onClick={() => setSelectedTag(null)}
+          >
+            全部
+            <span className="home-collection-count">{latestPosts.length}</span>
+          </button>
           {collections.map(([tag, count]) => (
-            <div className="home-collection-item" key={tag}>
+            <button
+              key={tag}
+              className={'home-collection-item' + (selectedTag === tag ? ' is-active' : '')}
+              onClick={() => setSelectedTag(tag)}
+            >
               {tag}
               <span className="home-collection-count">{count}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -332,11 +351,11 @@ function PostPage({
       {/* <button className="text-action article-back" type="button" onClick={() => onNavigate('/archive')}>
         返回归档
       </button> */}
-      <p className="eyebrow">{post.tags.join(' / ')}</p>
       <h2>{post.title}</h2>
       <div className="article-meta">
         <time dateTime={post.date}>{formatDate(post.date)}</time>
         <span>{post.readingTime}</span>
+        <span>{post.tags.join(' / ')}</span>
       </div>
       <MarkdownContent content={post.content} />
     </article>
